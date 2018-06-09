@@ -1,6 +1,7 @@
 # vue-firebase-app
 
-> A Vue.js project https://savvyapps.com/blog/definitive-guide-building-web-app-vuejs-firebase
+> Building a Real-World Web App With Vue.js and Firebase 
+> https://savvyapps.com/blog/definitive-guide-building-web-app-vuejs-firebase
 
 ## Build Setup
 
