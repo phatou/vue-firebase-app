@@ -9,18 +9,35 @@ fb.auth.onAuthStateChanged(user => {
 	if (user) {
 		store.commit('setCurrentUser', user);
 		store.dispatch('fetchUserProfile');
+
+		// realtime updates from our posts collection
+		fb.postsCollection
+			.orderBy('createdOn', 'desc')
+			.onSnapshot(querySnapshot => {
+				let postsArray = [];
+
+				querySnapshot.forEach(doc => {
+					let post = doc.data();
+					post.id = doc.id;
+					postsArray.push(post);
+				});
+
+				store.commit('setPosts', postsArray);
+			});
 	}
 });
 
 export const store = new Vuex.Store({
 	state: {
 		currentUser: null,
-		userProfile: {}
+		userProfile: {},
+		posts: []
 	},
 	actions: {
 		clearData({ commit }) {
 			commit('setCurrentUser', null);
 			commit('setUserProfile', {});
+			commit('setPosts', null);
 		},
 		fetchUserProfile({ commit, state }) {
 			fb.usersCollection
@@ -40,6 +57,9 @@ export const store = new Vuex.Store({
 		},
 		setUserProfile(state, val) {
 			state.userProfile = val;
+		},
+		setPosts(state, val) {
+			state.posts = val;
 		}
 	}
 });
