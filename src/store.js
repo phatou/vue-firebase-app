@@ -14,15 +14,38 @@ fb.auth.onAuthStateChanged(user => {
 		fb.postsCollection
 			.orderBy('createdOn', 'desc')
 			.onSnapshot(querySnapshot => {
-				let postsArray = [];
+				// check if created by currentUser
+				let createdByCurrentUser;
+				if (querySnapshot.docs.length) {
+					createdByCurrentUser =
+						store.state.currentUser.uid ==
+						querySnapshot.docChanges()[0].doc.data().userId
+							? true
+							: false;
+				}
 
-				querySnapshot.forEach(doc => {
-					let post = doc.data();
-					post.id = doc.id;
-					postsArray.push(post);
-				});
+				// add new posts to hiddenPosts array after initial load
+				if (
+					querySnapshot.docChanges().length !==
+						querySnapshot.docs.length &&
+					querySnapshot.docChanges()[0].type == 'added' &&
+					!createdByCurrentUser
+				) {
+					let post = querySnapshot.docChanges()[0].doc.data();
+					post.id = querySnapshot.docChanges()[0].doc.id;
 
-				store.commit('setPosts', postsArray);
+					store.commit('setHiddenPosts', post);
+				} else {
+					let postsArray = [];
+
+					querySnapshot.forEach(doc => {
+						let post = doc.data();
+						post.id = doc.id;
+						postsArray.push(post);
+					});
+
+					store.commit('setPosts', postsArray);
+				}
 			});
 	}
 });
@@ -31,7 +54,8 @@ export const store = new Vuex.Store({
 	state: {
 		currentUser: null,
 		userProfile: {},
-		posts: []
+		posts: [],
+		hiddenPosts: []
 	},
 	actions: {
 		clearData({ commit }) {
@@ -59,7 +83,21 @@ export const store = new Vuex.Store({
 			state.userProfile = val;
 		},
 		setPosts(state, val) {
-			state.posts = val;
+			if (val) {
+				state.posts = val;
+			} else {
+				state.ports = [];
+			}
+		},
+		setHiddenPosts(state, val) {
+			if (val) {
+				// make sure not to add duplicates
+				if (!state.hiddenPosts.some(x => x.id === val.id)) {
+					state.hiddenPosts.unshift(val);
+				}
+			} else {
+				state.hiddenPosts = [];
+			}
 		}
 	}
 });
